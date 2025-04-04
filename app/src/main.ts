@@ -1,6 +1,7 @@
 import { parseArgs } from 'jsr:@std/cli/parse-args';
 import { dirname, fromFileUrl, join, normalize } from 'jsr:@std/path';
-import { open } from 'npm:open/index.ts';
+// import { open } from 'npm:open/index.ts';
+import { open } from 'https://deno.land/x/open/index.ts';
 import { readChunks } from './read.ts';
 import log from './log.ts';
 import { render } from './markdownit.ts';
