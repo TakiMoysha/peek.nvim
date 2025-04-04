@@ -43,11 +43,9 @@ addEventListener('DOMContentLoaded', () => {
       markdownBody.style.setProperty('font-size', `${this.level}%`);
       if (silent) return;
       this.zoomLabel.textContent = `${this.level}%`;
-      this.zoomLabel.animate([
-        { opacity: 1 },
-        { opacity: 1, offset: 0.75 },
-        { opacity: 0 },
-      ], { duration: 1000 });
+      this.zoomLabel.animate([{ opacity: 1 }, { opacity: 1, offset: 0.75 }, { opacity: 0 }], {
+        duration: 1000,
+      });
     },
   };
 
@@ -61,22 +59,22 @@ addEventListener('DOMContentLoaded', () => {
       '0': zoom.reset.bind(zoom),
     };
     const plain: Record<string, () => void> = {
-      'j': () => {
+      j: () => {
         window.scrollBy({ top: 50 });
       },
-      'k': () => {
+      k: () => {
         window.scrollBy({ top: -50 });
       },
-      'd': () => {
+      d: () => {
         window.scrollBy({ top: window.innerHeight / 2 });
       },
-      'u': () => {
+      u: () => {
         window.scrollBy({ top: -window.innerHeight / 2 });
       },
-      'g': () => {
+      g: () => {
         window.scrollTo({ top: 0 });
       },
-      'G': () => {
+      G: () => {
         window.scrollTo({ top: document.body.scrollHeight });
       },
     };

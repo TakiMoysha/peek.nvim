@@ -1,11 +1,11 @@
-import { parseArgs } from 'jsr:@std/cli/parse-args';
-import { dirname, join, normalize } from 'jsr:@std/path';
+import { parseArgs } from 'https://deno.land/std@0.217.0/cli/parse_args.ts';
+import { dirname, join, normalize } from 'https://deno.land/std@0.217.0/path/mod.ts';
 import {
   getLogger,
   LogRecord,
   RotatingFileHandler,
   setup,
-} from 'jsr:@std/log';
+} from 'https://deno.land/std@0.217.0/log/mod.ts';
 
 const __args = parseArgs(Deno.args);
 

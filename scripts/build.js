@@ -1,4 +1,4 @@
-import { bundle } from 'jsr:@deno/emit';
+import { bundle } from 'https://deno.land/x/emit@0.38.1/mod.ts';
 
 const DEBUG = Deno.env.get('DEBUG');
 const { compilerOptions, imports } = JSON.parse(Deno.readTextFileSync('deno.json'));

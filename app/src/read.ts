@@ -1,4 +1,4 @@
-import type { Reader } from 'jsr:@std/io/types';
+import type { Reader } from 'https://deno.land/std@0.217.0/io/types.ts';
 
 async function read(reader: Reader, buffer: Uint8Array) {
   let read = 0;
