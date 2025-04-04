@@ -1,5 +1,5 @@
 import { hashCode, uniqueIdGen } from './util.ts';
-import { parseArgs } from 'https://deno.land/std@0.217.0/cli/parse_args.ts';
+import { parseArgs } from 'jsr:@std/cli/parse-args';
 import { default as highlight } from 'https://cdn.skypack.dev/highlight.js@11.9.0';
 // @deno-types="https://esm.sh/v135/@types/markdown-it@13.0.7/index.d.ts";
 import MarkdownIt from 'https://esm.sh/markdown-it@14.0.0';
@@ -16,18 +16,21 @@ const md = new MarkdownIt('default', {
   typographer: true,
   linkify: true,
   langPrefix: 'language-',
-  highlight: __args['syntax'] && ((code, language) => {
-    if (language && highlight.getLanguage(language)) {
-      try {
-        return highlight.highlight(code, { language }).value;
-      } catch {
-        return code;
+  highlight:
+    __args['syntax'] &&
+    ((code, language) => {
+      if (language && highlight.getLanguage(language)) {
+        try {
+          return highlight.highlight(code, { language }).value;
+        } catch {
+          return code;
+        }
       }
-    }
 
-    return '';
-  }),
-}).use(MarkdownItEmoji)
+      return '';
+    }),
+})
+  .use(MarkdownItEmoji)
   .use(MarkdownItFootnote)
   .use(MarkdownItTaskLists, { enabled: false, label: true })
   .use(MarkdownItTexmath, {

@@ -1,5 +1,5 @@
-import { readLines } from 'https://deno.land/std@0.159.0/io/buffer.ts';
-import { normalize } from 'https://deno.land/std@0.159.0/path/mod.ts';
+import { readLines } from 'jsr:@std/io/buffer';
+import { normalize } from 'jsr:@std/path';
 import { render } from './markdownit.ts';
 
 export default async function (socket: WebSocket) {
