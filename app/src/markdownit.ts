@@ -1,15 +1,33 @@
-import { hashCode, uniqueIdGen } from './util.ts';
-import { parseArgs } from 'https://deno.land/std@0.217.0/cli/parse_args.ts';
-import { default as highlight } from 'https://cdn.skypack.dev/highlight.js@11.9.0';
-// @deno-types="https://esm.sh/v135/@types/markdown-it@13.0.7/index.d.ts";
-import MarkdownIt from 'https://esm.sh/markdown-it@14.0.0';
-import { full as MarkdownItEmoji } from 'https://esm.sh/markdown-it-emoji@3.0.0';
-import { default as MarkdownItFootnote } from 'https://esm.sh/markdown-it-footnote@4.0.0';
-import { default as MarkdownItTaskLists } from 'https://esm.sh/markdown-it-task-lists@2.1.1';
-import { default as MarkdownItTexmath } from 'https://esm.sh/markdown-it-texmath@1.0.0';
-import Katex from 'https://esm.sh/katex@0.16.9';
+import { hashCode, uniqueIdGen } from './util.js';
+import highlight from 'highlight.js';
+import MarkdownIt from 'markdown-it';
+import { full as MarkdownItEmoji } from 'markdown-it-emoji';
+import MarkdownItFootnote from 'markdown-it-footnote';
+import MarkdownItTaskLists from 'markdown-it-task-lists';
+import MarkdownItTexmath from 'markdown-it-texmath';
+import Katex from 'katex';
 
-const __args = parseArgs(Deno.args);
+// Simple argument parser for syntax highlighting
+function parseSimpleArgs(args: string[]) {
+  const result: Record<string, any> = {};
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    if (arg.startsWith('--')) {
+      const [key, value] = arg.substring(2).split('=');
+      if (value !== undefined) {
+        result[key] = value;
+      } else if (args[i + 1] && !args[i + 1].startsWith('--')) {
+        result[key] = args[i + 1];
+        i++;
+      } else {
+        result[key] = true;
+      }
+    }
+  }
+  return result;
+}
+
+const __args = parseSimpleArgs(process.argv.slice(2));
 
 const md = new MarkdownIt('default', {
   html: true,

@@ -14,7 +14,7 @@
 
 ### :battery: Requirements
 
-- [Deno](https://deno.land)
+- [Bun](https://bun.sh) or [Node.js](https://nodejs.org)
 
 ### :electric_plug: Installation
 
@@ -24,7 +24,7 @@
 {
     "toppair/peek.nvim",
     event = { "VeryLazy" },
-    build = "deno task --quiet build:fast",
+    build = "bun run --silent build:fast",
     config = function()
         require("peek").setup()
         vim.api.nvim_create_user_command("PeekOpen", require("peek").open, {})

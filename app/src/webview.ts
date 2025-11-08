@@ -1,19 +1,36 @@
-import { Webview } from 'https://deno.land/x/webview@0.7.6/mod.ts';
-import { parseArgs } from 'https://deno.land/std@0.217.0/cli/parse_args.ts';
+// Simple argument parser
+function parseSimpleArgs(args: string[]) {
+  const result: Record<string, any> = {};
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    if (arg.startsWith('--')) {
+      const [key, value] = arg.substring(2).split('=');
+      if (value !== undefined) {
+        result[key] = value;
+      } else if (args[i + 1] && !args[i + 1].startsWith('--')) {
+        result[key] = args[i + 1];
+        i++;
+      } else {
+        result[key] = true;
+      }
+    }
+  }
+  return result;
+}
 
-const { url, theme, serverUrl } = parseArgs(Deno.args);
+const { url, theme, serverUrl } = parseSimpleArgs(process.argv.slice(2));
 
-const webview = new Webview();
+// For Node.js, we'll use the open package to open the URL in the default browser
+// This is a simplified version - in a real implementation you might want to use
+// a webview library like electron or similar
+import open from 'open';
 
-webview.title = 'Peek preview';
-webview.bind('_log', console.log);
-webview.init(`
-  window.peek = {};
-  window.peek.theme = "${theme}"
-  window.peek.serverUrl = "${serverUrl}"
-`);
+console.log('Opening webview with:', { url, theme, serverUrl });
 
-webview.navigate(url);
-webview.run();
+// Open the URL in the default browser
+open(url).catch(console.error);
 
-Deno.exit();
+// Keep the process alive briefly to ensure the browser opens
+setTimeout(() => {
+  process.exit();
+}, 1000);

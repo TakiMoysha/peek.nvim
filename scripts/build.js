@@ -1,15 +1,21 @@
-import { bundle } from 'https://deno.land/x/emit@0.38.1/mod.ts';
+import { build } from 'esbuild';
+import { readFileSync, writeFileSync, mkdirSync, readdirSync, statSync } from 'fs';
+import { spawn } from 'child_process';
 
-const DEBUG = Deno.env.get('DEBUG');
-const { compilerOptions, imports } = JSON.parse(Deno.readTextFileSync('deno.json'));
-const bundleOptions = { compilerOptions, importMap: { imports } };
+const DEBUG = process.env.DEBUG;
+const compilerOptions = {
+  lib: ["dom", "es2022"],
+  target: "es2022",
+  module: "esnext"
+};
 
 function logPublicContent() {
-  console.table(
-    Array.from(Deno.readDirSync('public')).reduce((table, entry) => {
-      const { size, mtime } = Deno.statSync('public/' + entry.name);
+  try {
+    const entries = readdirSync('public');
+    const table = entries.reduce((table, entry) => {
+      const { size, mtime } = statSync('public/' + entry);
 
-      table[entry.name] = {
+      table[entry] = {
         size,
         modified: new Date(mtime).toLocaleTimeString('en-GB', {
           day: '2-digit',
@@ -24,29 +30,42 @@ function logPublicContent() {
       };
 
       return table;
-    }, {}),
-  );
+    }, {});
+    console.table(table);
+  } catch (e) {
+    console.log('Public directory not found or empty');
+  }
 }
 
 async function emit(src, out) {
-  return Deno.writeTextFile(out, (await bundle(src, bundleOptions)).code);
+  const result = await build({
+    entryPoints: [src],
+    bundle: true,
+    format: 'esm',
+    target: 'es2022',
+    platform: 'node',
+    write: false,
+    external: [],
+  });
+  
+  if (result.outputFiles && result.outputFiles.length > 0) {
+    writeFileSync(out, result.outputFiles[0].text);
+  }
 }
 
 async function download(src, out, transform = (uint8array) => uint8array) {
-  Deno.mkdirSync(out.split('/').slice(0, -1).join('/'), { recursive: true });
+  mkdirSync(out.split('/').slice(0, -1).join('/'), { recursive: true });
   const res = await fetch(src);
   if (!res.ok) {
     throw new Error(`Failed to fetch ${src}. ${res.status} ${res.statusText}`);
   }
-  Deno.writeFileSync(out, transform(new Uint8Array(await res.arrayBuffer())));
+  writeFileSync(out, transform(new Uint8Array(await res.arrayBuffer())));
 }
 
 if (DEBUG) {
   logPublicContent();
 
-  new Deno.Command('git', {
-    args: ['branch', '--all'],
-  }).spawn();
+  spawn('git', ['branch', '--all'], { stdio: 'inherit' });
 }
 
 const result = await Promise.allSettled([

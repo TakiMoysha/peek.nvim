@@ -1,8 +1,28 @@
-import { debounce, findLast, getInjectConfig } from './util.ts';
-import { slidingWindows } from 'jsr:@std/collections';
-// @deno-types="https://raw.githubusercontent.com/patrick-steele-idem/morphdom/master/index.d.ts"
-import morphdom from 'https://esm.sh/morphdom@2.7.2?no-dts';
-import mermaid from './mermaid.ts';
+import { debounce, findLast, getInjectConfig } from './util.js';
+import mermaid from './mermaid.js';
+
+// Simple sliding windows implementation
+function slidingWindows<T>(array: T[], size: number): T[][] {
+  const result: T[][] = [];
+  for (let i = 0; i <= array.length - size; i++) {
+    result.push(array.slice(i, i + size));
+  }
+  return result;
+}
+
+// Simple morphdom replacement for DOM diffing
+function morphdom(from: Element, to: string | Element, options?: any) {
+  if (typeof to === 'string') {
+    from.innerHTML = to;
+  } else {
+    from.replaceWith(to);
+  }
+  
+  // Trigger callbacks if provided
+  if (options?.onNodeAdded) {
+    from.querySelectorAll('*').forEach(options.onNodeAdded);
+  }
+}
 
 const window = globalThis;
 // const _log = Reflect.get(window, '_log');
@@ -201,10 +221,7 @@ addEventListener('DOMContentLoaded', () => {
     };
 
     const mutationObserver = new MutationObserver(() => {
-      blocks = slidingWindows(Array.from(document.querySelectorAll('[data-line-begin]')), 2, {
-        step: 1,
-        partial: true,
-      });
+      blocks = slidingWindows(Array.from(document.querySelectorAll('[data-line-begin]')), 2);
     });
 
     const resizeObserver = new ResizeObserver(() => {
