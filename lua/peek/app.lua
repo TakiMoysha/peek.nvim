@@ -67,7 +67,7 @@ function module.init(on_exit)
         if content:match("assertion 'main_loops != NULL' failed") then
           return
         end
-        vim.notify('Peek error: ' .. content, vim.log.levels.ERROR, {})
+        vim.notify(content, vim.log.levels.ERROR, { title = 'Peek' })
       end
     end,
     on_exit = function()

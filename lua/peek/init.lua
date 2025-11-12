@@ -107,7 +107,7 @@ module.open = ensure_init(function()
 
   if not vim.tbl_contains(filetype, vim.bo[bufnr].filetype) then
     ---@diagnostic disable-next-line: param-type-mismatch
-    return vim.api.nvim_notify('Not a supported filetype: ' .. table.concat(filetype, ', '), vim.log.levels.WARN, {})
+    return vim.notify('Not a supported filetype: ' .. table.concat(filetype, ', '), vim.log.levels.WARN, { title = 'Peek' })
   end
 
   open(bufnr)

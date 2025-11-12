@@ -63,9 +63,7 @@ async function init(socket: any) {
 
   try {
       for await (const chunk of generator) {
-        logger.info('chunk: ', chunk);
         const action = decoder.decode(chunk.buffer);
-        logger.info('action: ', action);
 
         switch (action) {
           case 'show': {
