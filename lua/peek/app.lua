@@ -20,10 +20,18 @@ local function lentouint32(str)
 end
 
 local function message(chunks)
-  return concat(tbl_map(function(chunk)
-    return lentouint32(chunk) .. chunk
-  end, chunks))
+  return concat(
+    tbl_map(
+      function(chunk) return lentouint32(chunk) .. chunk end,
+      chunks
+    )
+  )
 end
+
+-- # as JSON
+-- local function message(chunks)
+--   return vim.json.encode(chunks)
+-- end
 
 function module.setup()
   local sep = vim.loop.os_uname().sysname:match('Windows') and '\\' or '/'
@@ -38,9 +46,8 @@ function module.setup()
   end
 
   cmd = vim.list_extend({
-    'deno',
-    'task',
-    '--quiet',
+    'bun',
+    'run',
     'run',
   }, args)
 end
@@ -60,7 +67,7 @@ function module.init(on_exit)
         if content:match("assertion 'main_loops != NULL' failed") then
           return
         end
-        vim.api.nvim_notify('Peek error: ' .. content, vim.log.levels.ERROR, {})
+        vim.notify('Peek error: ' .. content, vim.log.levels.ERROR, {})
       end
     end,
     on_exit = function()

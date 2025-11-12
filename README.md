@@ -24,7 +24,7 @@
 {
     "toppair/peek.nvim",
     event = { "VeryLazy" },
-    build = "bun run --silent build:fast",
+    build = "bun install && bun run build",
     config = function()
         require("peek").setup()
         vim.api.nvim_create_user_command("PeekOpen", require("peek").open, {})
@@ -129,3 +129,4 @@ vim.api.nvim_create_user_command('PeekClose', function()
   end
 end, {})
 ```
+
