@@ -5,7 +5,7 @@ import { WebSocketServer } from 'ws';
 import { spawn } from 'child_process';
 import { readFileSync, createReadStream } from 'fs';
 import open from 'open';
-import { readChunks } from './read.js';
+import { readBunStdin, readNodeStdin } from './read.js';
 import log from './log.js';
 import { render } from './markdownit.js';
 
@@ -40,58 +40,83 @@ const version = process.version;
 logger.info(`NODE_ENV: ${NODE_ENV}`, ...process.argv.slice(2));
 logger.info(`node: ${version}`);
 
+// HELPER
+function getStdinGenerator() {
+  const isBunRuntime = typeof Bun !== 'undefined';
+  if (isBunRuntime) {
+    return readBunStdin();
+  } else {
+    return readNodeStdin();
+  }
+}
+
 async function init(socket: any) {
   if (NODE_ENV === 'development') {
-    return void (await import(join(__dirname, 'ipc_dev.js'))).default(socket);
+    console.error('ipc_dev.ts wip, may not working');
+    return void (await import(join(__dirname, 'ipc_dev.ts'))).default(socket);
   }
 
   const encoder = new TextEncoder();
   const decoder = new TextDecoder();
 
-  const generator = readChunks(process.stdin);
+  const generator = getStdinGenerator();
 
   try {
-    for await (const chunk of generator) {
-      const action = decoder.decode(chunk.buffer);
+      for await (const chunk of generator) {
+        logger.info('chunk: ', chunk);
+        const action = decoder.decode(chunk.buffer);
+        logger.info('action: ', action);
 
-      switch (action) {
-        case 'show': {
-          const content = decoder.decode((await generator.next()).value!);
+        switch (action) {
+          case 'show': {
+            const content = decoder.decode((await generator.next()).value!);
 
-          socket.send(encoder.encode(JSON.stringify({
-            action: 'show',
-            html: render(content),
-            lcount: (content.match(/(?:\r?\n)/g) || []).length + 1,
-          })));
+            socket.send(
+              encoder.encode(
+                JSON.stringify({
+                  action: 'show',
+                  html: render(content),
+                  lcount: (content.match(/(?:\r?\n)/g) || []).length + 1,
+                }),
+              ),
+            );
 
-          break;
-        }
-        case 'scroll': {
-          socket.send(encoder.encode(JSON.stringify({
-            action,
-            line: decoder.decode((await generator.next()).value!),
-          })));
-          break;
-        }
-        case 'base': {
-          socket.send(encoder.encode(JSON.stringify({
-            action,
-            base: normalize(decoder.decode((await generator.next()).value!) + '/'),
-          })));
-          break;
-        }
-        default: {
-          break;
+            break;
+          }
+          case 'scroll': {
+            socket.send(
+              encoder.encode(
+                JSON.stringify({
+                  action,
+                  line: decoder.decode((await generator.next()).value!),
+                }),
+              ),
+            );
+            break;
+          }
+          case 'base': {
+            socket.send(
+              encoder.encode(
+                JSON.stringify({
+                  action,
+                  base: normalize(decoder.decode((await generator.next()).value!) + '/'),
+                }),
+              ),
+            );
+            break;
+          }
+          default: {
+            break;
+          }
         }
       }
-    }
   } catch (e: any) {
     if (e.name !== 'InvalidStateError') throw e;
   }
 }
 
 (() => {
-  const app = __args['app'] ? JSON.parse(__args['app']) : 'webview';
+  const app = __args['app'] ? __args?.app : 'webview';
 
   if (app === 'webview') {
     const server = createServer();
@@ -102,17 +127,21 @@ async function init(socket: any) {
       if (address && typeof address === 'object') {
         const serverUrl = `localhost:${address.port}`;
         logger.info(`listening on ${serverUrl}`);
-        
-        const webview = spawn('bun', [
-          'run',
-          join(__dirname, '../', 'public', 'webview.js'),
-          `--url=${new URL('index.html', import.meta.url).href}`,
-          `--theme=${__args['theme']}`,
-          `--serverUrl=${serverUrl}`,
-        ], {
-          cwd: dirname(fileURLToPath(import.meta.url)),
-          stdio: 'inherit'
-        });
+
+        const webview = spawn(
+          'bun',
+          [
+            'run',
+            join(__dirname, '../', 'public', 'webview.js'),
+            `--url=${new URL('index.html', import.meta.url).href}`,
+            `--theme=${__args?.theme || 'dark'}`,
+            `--serverUrl=${serverUrl}`,
+          ],
+          {
+            cwd: dirname(fileURLToPath(import.meta.url)),
+            stdio: 'inherit',
+          },
+        );
 
         webview.on('close', (code) => {
           logger.info(`webview closed, code: ${code}`);
@@ -129,10 +158,12 @@ async function init(socket: any) {
   }
 
   async function findFile(url: string): Promise<NodeJS.ReadableStream | null> {
-    const path = new URL(url).pathname.replace(/^\//, '') || 'index.html';
-    
+    const _url = new URL(`http://${process.env.HOST ?? 'localhost'}${url}`);
+    const path = _url.pathname.replace(/^\/+/, '') || 'index.html';
+    // const search = _url.search;
+
     try {
-      return createReadStream(join(__dirname, '../..', 'public', path));
+      return createReadStream(join(__dirname, '../', 'public', path));
     } catch (_) {
       return null;
     }
@@ -143,6 +174,7 @@ async function init(socket: any) {
 
   server.on('request', async (req, res) => {
     const file = await findFile(req.url || '');
+    logger.info('file', JSON.stringify(file));
     if (file) {
       res.writeHead(200);
       file.pipe(res);
@@ -161,11 +193,10 @@ async function init(socket: any) {
       const searchParams = new URLSearchParams({ theme: __args.theme });
       url.search = searchParams.toString();
 
-      open(url.href, { app: app !== 'browser' ? app : undefined })
-        .catch((e: any) => {
-          process.stderr.write(`${[app].flat().join(' ')}: ${e.message}`);
-          process.exit();
-        });
+      open(url.href, { app: app !== 'browser' ? app : undefined }).catch((e: any) => {
+        process.stderr.write(`${[app].flat().join(' ')}: ${e.message}`);
+        process.exit();
+      });
     }
   });
 
@@ -173,7 +204,7 @@ async function init(socket: any) {
 
   wss.on('connection', (socket) => {
     clearTimeout(timeout);
-    
+
     init(socket);
 
     socket.on('close', () => {
