@@ -62,52 +62,52 @@ async function init(socket: any) {
   const generator = getStdinGenerator();
 
   try {
-      for await (const chunk of generator) {
-        const action = decoder.decode(chunk.buffer);
+    for await (const chunk of generator) {
+      const action = decoder.decode(chunk.buffer);
 
-        switch (action) {
-          case 'show': {
-            const content = decoder.decode((await generator.next()).value!);
+      switch (action) {
+        case 'show': {
+          const content = decoder.decode((await generator.next()).value!);
 
-            socket.send(
-              encoder.encode(
-                JSON.stringify({
-                  action: 'show',
-                  html: render(content),
-                  lcount: (content.match(/(?:\r?\n)/g) || []).length + 1,
-                }),
-              ),
-            );
+          socket.send(
+            encoder.encode(
+              JSON.stringify({
+                action: 'show',
+                html: render(content),
+                lcount: (content.match(/(?:\r?\n)/g) || []).length + 1,
+              }),
+            ),
+          );
 
-            break;
-          }
-          case 'scroll': {
-            socket.send(
-              encoder.encode(
-                JSON.stringify({
-                  action,
-                  line: decoder.decode((await generator.next()).value!),
-                }),
-              ),
-            );
-            break;
-          }
-          case 'base': {
-            socket.send(
-              encoder.encode(
-                JSON.stringify({
-                  action,
-                  base: normalize(decoder.decode((await generator.next()).value!) + '/'),
-                }),
-              ),
-            );
-            break;
-          }
-          default: {
-            break;
-          }
+          break;
+        }
+        case 'scroll': {
+          socket.send(
+            encoder.encode(
+              JSON.stringify({
+                action,
+                line: decoder.decode((await generator.next()).value!),
+              }),
+            ),
+          );
+          break;
+        }
+        case 'base': {
+          socket.send(
+            encoder.encode(
+              JSON.stringify({
+                action,
+                base: normalize(decoder.decode((await generator.next()).value!) + '/'),
+              }),
+            ),
+          );
+          break;
+        }
+        default: {
+          break;
         }
       }
+    }
   } catch (e: any) {
     if (e.name !== 'InvalidStateError') throw e;
   }
