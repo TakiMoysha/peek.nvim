@@ -141,6 +141,7 @@ addEventListener('DOMContentLoaded', () => {
 
   socket.onmessage = (event) => {
     const data = JSON.parse(decoder.decode(event.data));
+    console.log(data);
 
     switch (data.action) {
       case 'show':

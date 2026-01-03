@@ -9,6 +9,7 @@ import { render } from "./markdownit.ts";
  * @param socket WebSocket instance.
  */
 export default async function (socket: WebSocket): Promise<void> {
+
 	const decoder = new TextDecoder();
 	const encoder = new TextEncoder();
 
@@ -21,6 +22,7 @@ export default async function (socket: WebSocket): Promise<void> {
 	for await (const line of rl) {
 		// string format action:arg1,arg2,...
 		const [action, ...args] = line.split(":");
+		console.log(action, args);
 
 		switch (action) {
 			case "show": {
@@ -29,6 +31,7 @@ export default async function (socket: WebSocket): Promise<void> {
 					const raw = readFileSync(args[0]);
 					const content = decoder.decode(raw);
 
+					console.log("SHOW: ", content);
 					socket.send(
 						encoder.encode(
 							JSON.stringify({
@@ -45,6 +48,7 @@ export default async function (socket: WebSocket): Promise<void> {
 			}
 
 			case "scroll": {
+				console.log("SCROLL: ", args);
 				socket.send(
 					encoder.encode(
 						JSON.stringify({
@@ -57,6 +61,7 @@ export default async function (socket: WebSocket): Promise<void> {
 			}
 
 			case "base": {
+				console.log("BASE: ", args);
 				socket.send(
 					encoder.encode(
 						JSON.stringify({

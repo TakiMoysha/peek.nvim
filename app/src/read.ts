@@ -39,7 +39,8 @@ export async function* readBunStdin() {
     pending = newPending;
 
     while (pending.length >= 4) {
-      const length = new DataView(pending.buffer, 0, 4).getUint32(0);
+      // const length = new DataView(pending.buffer, 0, 4).getUint32(0);
+      const length = new DataView(pending.buffer, pending.byteOffset, 4).getUint32(0);
       if (pending.length < 4 + length) break;
       yield pending.subarray(4, 4 + length);
       pending = pending.subarray(4 + length);

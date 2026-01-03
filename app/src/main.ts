@@ -52,8 +52,7 @@ function getStdinGenerator() {
 
 async function init(socket: any) {
   if (NODE_ENV === 'development') {
-    console.error('ipc_dev.ts wip, may not working');
-    return void (await import(join(__dirname, 'ipc_dev.ts'))).default(socket);
+    return void (await import(join(__dirname, '../app/src/ipc_dev.ts'))).default(socket);
   }
 
   const encoder = new TextEncoder();
@@ -78,7 +77,6 @@ async function init(socket: any) {
               }),
             ),
           );
-
           break;
         }
         case 'scroll': {
@@ -124,6 +122,7 @@ async function init(socket: any) {
       const address = server.address();
       if (address && typeof address === 'object') {
         const serverUrl = `localhost:${address.port}`;
+        logger.info("Starting webview");
         logger.info(`listening on ${serverUrl}`);
 
         const webview = spawn(
@@ -143,7 +142,8 @@ async function init(socket: any) {
 
         webview.on('close', (code) => {
           logger.info(`webview closed, code: ${code}`);
-          process.exit();
+          // if exception throw in browser it is not caught with `process.exit()`
+          // process.exit()
         });
       }
     });
